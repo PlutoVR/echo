@@ -4,20 +4,23 @@ function lovr.load()
   captions = 'captions'
   wasPressed = false
   chunkSize = 512
+  textScale = .1
+  textColor = 0xf7f7f7
+  backgroundColor = 0x3933f3
 
   microphone = lovr.audio.newMicrophone(nil, chunkSize * 2, 16000, 16, 1)
   microphone:startRecording()
 
-  speechChannel = lovr.thread.getChannel('feed')
+  speechChannel = lovr.thread.getChannel('speech')
   speechChannel:push(root)
   speechChannel:push(captions)
   speechChannel:push(chunkSize)
   speechChannel:push(microphone)
-  -- speechChannel:push(stream)
+
   speech = lovr.thread.newThread([[
     local speech = require 'lua-deepspeech'
     local lovr = { thread = require 'lovr.thread', audio = require 'lovr.audio', data = require 'lovr.data' }
-    local channel = lovr.thread.getChannel('feed')
+    local channel = lovr.thread.getChannel('speech')
 
     local root = channel:pop()
     local captions = channel:pop()
@@ -50,10 +53,6 @@ function lovr.load()
     end
   ]])
   speech:start()
-
-  textScale = .1
-  textColor = 0xf7f7f7
-  backgroundColor = 0x3933f3
 
   screenshots = {
     lovr.graphics.newTexture(root .. '/images/PANO_20150408_183912.jpg', { mipmaps = false }),
