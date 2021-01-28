@@ -1,17 +1,25 @@
 local root = lovr.filesystem.getRealDirectory('data')
 
 function lovr.load()
+  darkMode = true
+
   captions = { 'captions', 'test', 'yoyoyoyoyoyoyoyoyoyoyoyoyoyoyo' }
   fadingCaption = ''
   fadingCaptionOpacity = 1
   wasPressed = false
   chunkSize = 1024
   textScale = .125
-  textColor = { 1, 1, 1, 1 } --0xf7f7f7
-  backgroundColor = 0x3933f3
   currentLine = 1
   maxLineLength = 32
   active = true
+
+  lightModeBackground = { 245/255, 235/255, 245/255, .9 }
+  lightModeText = 0x141414
+  darkModeBackground = { 20/255, 20/255, 20/255, .9 }
+  darkModeText = { .9, .9, .9, 1 }
+
+  textColor = darkModeText
+  backgroundColor = darkModeBackground
 
   microphone = lovr.audio.newMicrophone(nil, chunkSize * 2, 16000, 16, 1)
   microphone:startRecording()
@@ -73,12 +81,31 @@ function lovr.load()
 end
 
 function lovr.update(dt)
+  handleActivate()
+  handleThemeSelection()
+  updateCaptions()
+  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
+end
+
+function handleActivate()
   if lovr.headset.wasPressed('right', 'trigger') then
     active = not active
   end
+end
 
-  updateCaptions()
-  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
+function handleThemeSelection()
+  trigger = lovr.headset.wasPressed('left', 'trigger')
+  if trigger then
+    darkMode = not darkMode
+  end
+
+  if darkMode then
+    backgroundColor = darkModeBackground
+    textColor = darkModeText
+  else
+    backgroundColor = lightModeBackground
+    textColor = lightModeText
+  end
 end
 
 function updateCaptions()
