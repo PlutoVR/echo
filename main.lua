@@ -25,11 +25,49 @@ function lovr.load()
   speechChannel:push(chunkSize)
   speechChannel:push(microphone)
 
+  speech = lovr.thread.newThread([[	
+    local speech = require 'lua-deepspeech'	
+    local lovr = {	
+      thread = require 'lovr.thread',	
+      audio = require 'lovr.audio',	
+      data = require 'lovr.data',	
+      timer = require 'lovr.timer'	
+    }	
+    local channel = lovr.thread.getChannel('speech')	
+    local root = channel:pop()	
+    local captions = channel:pop()	
+    local chunkSize = channel:pop()	
+    local microphone = channel:pop()	
+    local prevTime = 0	
+    speech.init({	
+      model = root .. '/data/deepspeech-0.9.3-models.pbmm',	
+      scorer = root .. '/data/deepspeech-0.9.3-models.scorer'	
+    })	
+    sampleRate = speech.getSampleRate()	
+    assert(sampleRate == 16000, string.format('Unsupported sample rate %d', sampleRate))	
+    local stream = speech.newStream()	
+    print('~~ mic: '..microphone:getName())	
+    while true do	
+      if microphone:getSampleCount() > chunkSize then	
+        local soundData = microphone:getData()	
+        stream:feed(soundData:getBlob():getPointer(), soundData:getSampleCount())	
+      end	
+      local time = lovr.timer.getTime()	
+      if time - prevTime > 2 then	
+        prevTime = time	
+        captions = stream:decode()	
+        channel:push(captions)	
+        stream:clear()	
+      end	
+    end	
+  ]])	
+  speech:start()	
+
   screenshots = {
     lovr.graphics.newTexture(root .. '/images/PANO_20150408_183912.jpg', { mipmaps = false }),
     lovr.graphics.newTexture(root .. '/images/obduction-nvidia-ansel-360-photosphere.jpg', { mipmaps = false }),
     lovr.graphics.newTexture(root .. '/images/VikingVillage_thumb.jpg', { mipmaps = false }),
-    lovr.graphics.newTexture(root .. '/images/PANO_20191112_182609.jpg', { mipmaps = false }),
+    lovr.graphics.newTexture(root .. '/images/PANO_20191112_182609.jpg', { mipmaps = false })
   }
 end
 
