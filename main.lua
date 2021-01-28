@@ -11,6 +11,7 @@ function lovr.load()
   textScale = .125
   currentLine = 1
   maxLineLength = 32
+  active = true
 
   lightModeBackground = { 245/255, 235/255, 245/255, .9 }
   lightModeText = 0x141414
@@ -80,20 +81,21 @@ function lovr.load()
 end
 
 function lovr.update(dt)
-  -- down = lovr.headset.isDown('right', 'trigger')
-  -- if down and not microphone:isRecording() then
-  --   wasPressed = true
-    -- microphone:startRecording()
-  -- elseif wasPressed and not down then
-  --   wasPressed = false
-  --   captions = stream:decode()
-  --   microphone:stopRecording()
-  --   stream:clear()
-  -- end
+  handleActivate()
+  handleThemeSelection()
+  updateCaptions()
+  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
+end
 
+function handleActivate()
+  if lovr.headset.wasPressed('right', 'trigger') then
+    active = not active
+  end
+end
+
+function handleThemeSelection()
   trigger = lovr.headset.wasPressed('left', 'trigger')
   if trigger then
-    print(darkMode)
     darkMode = not darkMode
   end
 
@@ -104,21 +106,32 @@ function lovr.update(dt)
     backgroundColor = lightModeBackground
     textColor = lightModeText
   end
+end
 
+function updateCaptions()
   local message, present = speechChannel:peek()
   if present and type(message) == "string" then
     local t = speechChannel:pop()
-    addCaption(t)
+    if string.find(t, 'cap on') then
+      active = true
+    elseif string.find(t, 'cap off') then
+      active = false
+    else
+      addCaption(t)
+    end
   end
-
-  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
 end
 
 function lovr.draw()
   lovr.graphics.setColor(0xffffff)
-
   lovr.graphics.skybox(screenshots[2])
 
+  if not active then return end
+
+  drawCaptions()
+end
+
+function drawCaptions()
   lovr.graphics.setColor(backgroundColor)
   lovr.graphics.plane('fill', 0, 1, -2.001, 2, .65)
 
