@@ -1,19 +1,22 @@
 local root = lovr.filesystem.getRealDirectory('data')
 
 function lovr.load()
-  captions = 'captions'
+  captions = { 'captions', 'test', 'yoyoyoyoyoyoyoyoyoyoyoyoyoyoyo' }
+  fadingCaption = ''
+  fadingCaptionOpacity = 1
   wasPressed = false
-  chunkSize = 512
-  textScale = .1
-  textColor = 0xf7f7f7
+  chunkSize = 1024
+  textScale = .125
+  textColor = { 1, 1, 1, 1 } --0xf7f7f7
   backgroundColor = 0x3933f3
+  currentLine = 1
+  maxLineLength = 32
 
   microphone = lovr.audio.newMicrophone(nil, chunkSize * 2, 16000, 16, 1)
   microphone:startRecording()
 
   speechChannel = lovr.thread.getChannel('speech')
   speechChannel:push(root)
-  speechChannel:push(captions)
   speechChannel:push(chunkSize)
   speechChannel:push(microphone)
 
@@ -28,10 +31,10 @@ function lovr.load()
     local channel = lovr.thread.getChannel('speech')
 
     local root = channel:pop()
-    local captions = channel:pop()
     local chunkSize = channel:pop()
     local microphone = channel:pop()
 
+    local captions = ''
     local prevTime = 0
 
     speech.init({
@@ -50,11 +53,11 @@ function lovr.load()
         stream:feed(soundData:getBlob():getPointer(), soundData:getSampleCount())
       end
       local time = lovr.timer.getTime()
-      if time - prevTime > 2 then
+      if time - prevTime > 1.5 then
         prevTime = time
         captions = stream:decode()
-        channel:push(captions)
         stream:clear()
+        channel:push(captions)
       end
     end
   ]])
@@ -82,15 +85,59 @@ function lovr.update(dt)
 
   local message, present = speechChannel:peek()
   if present and type(message) == "string" then
-    captions = speechChannel:pop()
+    local t = speechChannel:pop()
+    addCaption(t)
   end
+
+  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
 end
 
 function lovr.draw()
+  lovr.graphics.setColor(0xffffff)
+
   lovr.graphics.skybox(screenshots[2])
 
   lovr.graphics.setColor(backgroundColor)
-  lovr.graphics.plane('fill', 0, 1.7, -3.001, 2, 1)
+  lovr.graphics.plane('fill', 0, 1, -2.001, 2, .65)
+
   lovr.graphics.setColor(textColor)
-  lovr.graphics.print(captions, 0, 2, -3, textScale)
+  lovr.graphics.print(captions[1], 0, 1.15, -2, textScale)
+  lovr.graphics.print(captions[2], 0, 1, -2, textScale)
+  lovr.graphics.print(captions[3], 0, .85, -2, textScale)
+
+  if not isEmpty(fadingCaption) then
+    local r, g, b, a = unpack(textColor)
+    lovr.graphics.setColor(r, g, b, fadingCaptionOpacity)
+    lovr.graphics.print(fadingCaption, 0, 1.28, -2, textScale)
+    if fadingCaptionOpacity == 0 then
+      fadingCaption = ''
+    end
+  end
+end
+
+function isEmpty(str)
+  return str == ''
+end
+
+function addCaption(text)
+  if not isEmpty(text) then
+    if (#captions[currentLine] + #text) <= maxLineLength then
+      captions[currentLine] = captions[currentLine] .. ' ' .. text
+    else
+      if currentLine == 3 then
+        scrollUp()
+      else
+        currentLine = currentLine + 1
+      end
+      captions[currentLine] = text
+    end
+  end
+end
+
+function scrollUp()
+  fadingCaptionOpacity = 1
+  fadingCaption = captions[1]
+  captions[1] = captions[2]
+  captions[2] = captions[3]
+  captions[3] = ''
 end
