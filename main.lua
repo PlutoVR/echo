@@ -11,6 +11,7 @@ function lovr.load()
   backgroundColor = 0x3933f3
   currentLine = 1
   maxLineLength = 32
+  active = true
 
   microphone = lovr.audio.newMicrophone(nil, chunkSize * 2, 16000, 16, 1)
   microphone:startRecording()
@@ -72,31 +73,38 @@ function lovr.load()
 end
 
 function lovr.update(dt)
-  -- down = lovr.headset.isDown('right', 'trigger')
-  -- if down and not microphone:isRecording() then
-  --   wasPressed = true
-    -- microphone:startRecording()
-  -- elseif wasPressed and not down then
-  --   wasPressed = false
-  --   captions = stream:decode()
-  --   microphone:stopRecording()
-  --   stream:clear()
-  -- end
+  if lovr.headset.wasPressed('right', 'trigger') then
+    active = not active
+  end
 
+  updateCaptions()
+  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
+end
+
+function updateCaptions()
   local message, present = speechChannel:peek()
   if present and type(message) == "string" then
     local t = speechChannel:pop()
-    addCaption(t)
+    if string.find(t, 'cap on') then
+      active = true
+    elseif string.find(t, 'cap off') then
+      active = false
+    else
+      addCaption(t)
+    end
   end
-
-  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
 end
 
 function lovr.draw()
   lovr.graphics.setColor(0xffffff)
-
   lovr.graphics.skybox(screenshots[2])
 
+  if not active then return end
+
+  drawCaptions()
+end
+
+function drawCaptions()
   lovr.graphics.setColor(backgroundColor)
   lovr.graphics.plane('fill', 0, 1, -2.001, 2, .65)
 
