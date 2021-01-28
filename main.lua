@@ -19,7 +19,12 @@ function lovr.load()
 
   speech = lovr.thread.newThread([[
     local speech = require 'lua-deepspeech'
-    local lovr = { thread = require 'lovr.thread', audio = require 'lovr.audio', data = require 'lovr.data' }
+    local lovr = {
+      thread = require 'lovr.thread',
+      audio = require 'lovr.audio',
+      data = require 'lovr.data',
+      timer = require 'lovr.timer'
+    }
     local channel = lovr.thread.getChannel('speech')
 
     local root = channel:pop()
@@ -27,6 +32,7 @@ function lovr.load()
     local chunkSize = channel:pop()
     local microphone = channel:pop()
 
+    local prevTime = 0
 
     speech.init({
       model = root .. '/data/deepspeech-0.9.3-models.pbmm',
@@ -43,9 +49,9 @@ function lovr.load()
         local soundData = microphone:getData()
         stream:feed(soundData:getBlob():getPointer(), soundData:getSampleCount())
       end
-      local message, present = channel:peek()
-      if present and message == 200 then
-        channel:pop()
+      local time = lovr.timer.getTime()
+      if time - prevTime > 2 then
+        prevTime = time
         captions = stream:decode()
         channel:push(captions)
         stream:clear()
@@ -60,8 +66,6 @@ function lovr.load()
     lovr.graphics.newTexture(root .. '/images/VikingVillage_thumb.jpg', { mipmaps = false }),
     lovr.graphics.newTexture(root .. '/images/PANO_20191112_182609.jpg', { mipmaps = false })
   }
-
-  prevTime = 0
 end
 
 function lovr.update(dt)
@@ -76,11 +80,6 @@ function lovr.update(dt)
   --   stream:clear()
   -- end
 
-  local time = lovr.timer.getTime()
-  if time - prevTime > 2 then
-    prevTime = time
-    speechChannel:push(200)
-  end
   local message, present = speechChannel:peek()
   if present and type(message) == "string" then
     captions = speechChannel:pop()
