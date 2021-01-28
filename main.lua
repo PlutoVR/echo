@@ -1,126 +1,47 @@
+io.stdout:setvbuf('no')
 local root = lovr.filesystem.getRealDirectory('data')
+controlPanel = require 'control-panel'
+local speech = require 'speech'
+
+white = 0xffffff
 
 function lovr.load()
-  darkMode = true
+  controlPanel:init()
+  speech:init()
+  active = controlPanel.settings.active
+  darkMode = controlPanel.settings.theme == 'dark'
 
+  captionBox = { x = 0, y = 1, z = -2 }
   captions = { 'captions', 'test', 'yoyoyoyoyoyoyoyoyoyoyoyoyoyoyo' }
   fadingCaption = ''
   fadingCaptionOpacity = 1
   wasPressed = false
-  chunkSize = 1024
   textScale = .125
   currentLine = 1
   maxLineLength = 32
-  active = true
 
   lightModeBackground = { 245/255, 235/255, 245/255, .9 }
   lightModeText = 0x141414
   darkModeBackground = { 20/255, 20/255, 20/255, .9 }
   darkModeText = { .9, .9, .9, 1 }
 
-  textColor = darkModeText
-  backgroundColor = darkModeBackground
-
-  microphone = lovr.audio.newMicrophone(nil, chunkSize * 2, 16000, 16, 1)
-  microphone:startRecording()
-
-  speechChannel = lovr.thread.getChannel('speech')
-  speechChannel:push(root)
-  speechChannel:push(chunkSize)
-  speechChannel:push(microphone)
-
-  speech = lovr.thread.newThread([[
-    local speech = require 'lua-deepspeech'
-    local lovr = {
-      thread = require 'lovr.thread',
-      audio = require 'lovr.audio',
-      data = require 'lovr.data',
-      timer = require 'lovr.timer'
-    }
-    local channel = lovr.thread.getChannel('speech')
-
-    local root = channel:pop()
-    local chunkSize = channel:pop()
-    local microphone = channel:pop()
-
-    local captions = ''
-    local prevTime = 0
-
-    speech.init({
-      model = root .. '/data/deepspeech-0.9.3-models.pbmm',
-      scorer = root .. '/data/deepspeech-0.9.3-models.scorer'
-    })
-
-    sampleRate = speech.getSampleRate()
-    assert(sampleRate == 16000, string.format('Unsupported sample rate %d', sampleRate))
-    local stream = speech.newStream()
-    print('~~ mic: '..microphone:getName())
-
-    while true do
-      if microphone:getSampleCount() > chunkSize then
-        local soundData = microphone:getData()
-        stream:feed(soundData:getBlob():getPointer(), soundData:getSampleCount())
-      end
-      local time = lovr.timer.getTime()
-      if time - prevTime > 1.5 then
-        prevTime = time
-        captions = stream:decode()
-        stream:clear()
-        channel:push(captions)
-      end
-    end
-  ]])
-  speech:start()
-
   screenshots = {
     lovr.graphics.newTexture(root .. '/images/PANO_20150408_183912.jpg', { mipmaps = false }),
-    lovr.graphics.newTexture(root .. '/images/obduction-nvidia-ansel-360-photosphere.jpg', { mipmaps = false }),
+    lovr.graphics.newTexture('/images/obduction-nvidia-ansel-360-photosphere.jpg', { mipmaps = false }),
     lovr.graphics.newTexture(root .. '/images/VikingVillage_thumb.jpg', { mipmaps = false }),
     lovr.graphics.newTexture(root .. '/images/PANO_20191112_182609.jpg', { mipmaps = false })
   }
 end
 
 function lovr.update(dt)
-  handleActivate()
-  handleThemeSelection()
-  updateCaptions()
+  controlPanel:update(dt)
+  speech:update(dt)
+
+  active = controlPanel.settings.active and speech.active
+  darkMode = controlPanel.settings.theme == 'dark'
   fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
 end
 
-function handleActivate()
-  if lovr.headset.wasPressed('right', 'trigger') then
-    active = not active
-  end
-end
-
-function handleThemeSelection()
-  trigger = lovr.headset.wasPressed('left', 'trigger')
-  if trigger then
-    darkMode = not darkMode
-  end
-
-  if darkMode then
-    backgroundColor = darkModeBackground
-    textColor = darkModeText
-  else
-    backgroundColor = lightModeBackground
-    textColor = lightModeText
-  end
-end
-
-function updateCaptions()
-  local message, present = speechChannel:peek()
-  if present and type(message) == "string" then
-    local t = speechChannel:pop()
-    if string.find(t, 'cap on') then
-      active = true
-    elseif string.find(t, 'cap off') then
-      active = false
-    else
-      addCaption(t)
-    end
-  end
-end
 
 function lovr.draw()
   lovr.graphics.setColor(0xffffff)
@@ -129,21 +50,28 @@ function lovr.draw()
   if not active then return end
 
   drawCaptions()
+  lovr.graphics.push()
+  lovr.graphics.translate(captionBox.x - .9, captionBox.y - .4, captionBox.z)
+  controlPanel:draw()
+  lovr.graphics.pop()
+  lovr.graphics.setColor(0xffffff)
 end
 
 function drawCaptions()
+  local backgroundColor = darkMode and darkModeBackground or lightModeBackground
   lovr.graphics.setColor(backgroundColor)
-  lovr.graphics.plane('fill', 0, 1, -2.001, 2, .65)
+  lovr.graphics.plane('fill', captionBox.x, captionBox.y, captionBox.z - .001, 2, .65)
 
+  local textColor = darkMode and darkModeText or lightModeText
   lovr.graphics.setColor(textColor)
-  lovr.graphics.print(captions[1], 0, 1.15, -2, textScale)
-  lovr.graphics.print(captions[2], 0, 1, -2, textScale)
-  lovr.graphics.print(captions[3], 0, .85, -2, textScale)
+  lovr.graphics.print(captions[1], captionBox.x, captionBox.y + .15, captionBox.z, textScale)
+  lovr.graphics.print(captions[2], captionBox.x, captionBox.y, captionBox.z, textScale)
+  lovr.graphics.print(captions[3], captionBox.x, captionBox.y - .15, captionBox.z, textScale)
 
   if not isEmpty(fadingCaption) then
     local r, g, b, a = unpack(textColor)
     lovr.graphics.setColor(r, g, b, fadingCaptionOpacity)
-    lovr.graphics.print(fadingCaption, 0, 1.28, -2, textScale)
+    lovr.graphics.print(fadingCaption, captionBox.x, captionBox.y + .28, captionBox.z, textScale)
     if fadingCaptionOpacity == 0 then
       fadingCaption = ''
     end
