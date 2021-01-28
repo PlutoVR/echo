@@ -113,5 +113,4 @@ function lovr.draw()
   lovr.graphics.setColor(textColor)
   lovr.graphics.print(captions, 0, 2, -3, textScale)
   lovr.graphics.setColor(1, 1, 1, 1)
-
 end
