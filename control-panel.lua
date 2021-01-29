@@ -44,7 +44,8 @@ function control:init()
   self.buttonScale = .6
   self.buttonHeight = .2*self.buttonScale
   self.buttonWidth = .2*self.buttonScale
-  
+  self.offsetX, self.offsetY, self.offsetZ = 0, 0, 0
+
   self.tips = {}
 end
 
@@ -62,7 +63,7 @@ function control:raycast(rayPos, rayDir, planePos, planeDir)
   end
 end
 
-function control:updatePointer() 
+function control:updatePointer()
   for i, hand in ipairs(lovr.headset.getHands()) do
     self.tips[hand] = self.tips[hand] or lovr.math.newVec3()
 
@@ -74,26 +75,24 @@ function control:updatePointer()
       local buttonPosition = lovr.math.newVec3(self.offsetX + b.xOffset, self.offsetY, self.offsetZ)
       -- Call the raycast helper function to get the intersection point of the ray and the button plane
       local hit = self:raycast(rayPosition, rayDirection, buttonPosition, vec3(0, 0, 1))
-  
+
       local inside = false
       if hit then
         local bx, by, bw, bh = buttonPosition.x, buttonPosition.y, self.buttonWidth / 2, self.buttonHeight / 2
         inside = (hit.x > bx - bw) and (hit.x < bx + bw) and (hit.y > by - bh) and (hit.y < by + bh)
       end
-  
+
       -- If the ray intersects the plane, do a bounds test to make sure the x/y position of the hit
       -- is inside the button, then mark the button as hover/active based on the trigger state.
       if inside then
         b.hover = true
         if lovr.headset.wasReleased(hand, 'trigger') then
           b.onClick()
-          self.button.count = self.button.count + 1
-          print('BOOP')
         end
       else
         b.hover = false
       end
-  
+
       -- Set the end position of the pointer.  If the raycast produced a hit position then use that,
       -- otherwise extend the pointer's ray outwards by 50 meters and use it as the tip.
       self.tips[hand]:set(inside and hit or (rayPosition + rayDirection * 50))
@@ -117,7 +116,7 @@ function control:drawUI(x, y, z)
   lovr.graphics.pop()
 end
 
-function control:drawPointer() 
+function control:drawPointer()
   -- Pointers
   for hand, tip in pairs(self.tips) do
     local position = vec3(lovr.headset.getPosition(hand))
