@@ -12,7 +12,7 @@ function lovr.load()
   size = controlPanel.settings.fontSize
   wristControl = false
 
-  captionBox = { x = 0, y = 1, z = -2, width = 1.5, height = .65 }
+  captionBox = { x = 0, y = 1.5, z = -2, width = 1.5, height = .65 }
   captions = { '', '', '' }
   fadingCaption = ''
   fadingCaptionOpacity = 1
