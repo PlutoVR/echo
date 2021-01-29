@@ -6,7 +6,6 @@ function speech:init()
   lovr.filesystem.write('model.pbmm', lovr.filesystem.read('/data/deepspeech-0.9.3-models.pbmm'))
   lovr.filesystem.write('model.scorer', lovr.filesystem.read('/data/deepspeech-0.9.3-models.scorer'))
 
-  self.active = true
   self.chunkSize = 1024
   self.microphone = lovr.audio.newMicrophone(nil, self.chunkSize * 2, 16000, 16, 1)
   self.microphone:startRecording()

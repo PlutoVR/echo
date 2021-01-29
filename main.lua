@@ -10,17 +10,17 @@ function lovr.load()
   active = controlPanel.settings.active
   darkMode = controlPanel.settings.theme == 'dark'
   size = controlPanel.settings.fontSize
+  wristControl = false
 
   captionBox = { x = 0, y = 1, z = -2, width = 1.5, height = .65 }
   captions = { 'captions', 'test', 'yoyoyoyoyoyoyoyoyoyoyo' }
   fadingCaption = ''
   fadingCaptionOpacity = 1
-  wasPressed = false
   currentLine = 1
 
   lightModeBackground = { 245/255, 235/255, 245/255, .9 }
   lightModeText = { 20/255, 20/255, 20/255, 1 }
-  darkModeBackground = { 20/255, 20/255, 20/255, .9 }
+  darkModeBackground = { 20/255, 10/255, 20/255, .9 }
   darkModeText = { .9, .9, .9, 1 }
 
   fontSizeModifiers = {
@@ -35,14 +35,17 @@ function lovr.load()
     lovr.graphics.newTexture('/images/VikingVillage_thumb.jpg', { mipmaps = false }),
     lovr.graphics.newTexture('/images/PANO_20191112_182609.jpg', { mipmaps = false })
   }
+
+  createCaptionBoxShader()
 end
 
 function lovr.update(dt)
   controlPanel:update(dt)
   speech:update(dt)
 
-  active = controlPanel.settings.active and speech.active
+  active = controlPanel.settings.active
   darkMode = controlPanel.settings.theme == 'dark'
+  size = controlPanel.settings.fontSize
   fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
 end
 
@@ -54,8 +57,18 @@ function lovr.draw()
   if not active then return end
 
   drawCaptions()
+
+  local x, y, z, angle, ax, ay, az, scale
+  if wristControl then
+    x, y, z, angle, ax, ay, az = lovr.headset.getPose('left')
+  else
+    x, y, z = captionBox.x - ((captionBox.width / 2) - .05), captionBox.y - (((captionBox.height / 2) * fontSizeModifiers[size].boxHeightModifier) + .1), captionBox.z
+    angle, ax, ay, az = 0, 0, 1, 0
+  end
   lovr.graphics.push()
-  lovr.graphics.translate(captionBox.x - ((captionBox.width / 2) - .05), captionBox.y - (((captionBox.height / 2) * fontSizeModifiers[size].boxHeightModifier) + .1), captionBox.z)
+  lovr.graphics.translate(x, y, z)
+  lovr.graphics.rotate(angle, ax, ay, az)
+  lovr.graphics.scale(wristControl and .35 or 1)
   controlPanel:draw()
   lovr.graphics.pop()
   lovr.graphics.setColor(0xffffff)
@@ -64,7 +77,9 @@ end
 function drawCaptions()
   local backgroundColor = darkMode and darkModeBackground or lightModeBackground
   lovr.graphics.setColor(backgroundColor)
+  lovr.graphics.setShader(roundrect)
   lovr.graphics.plane('fill', captionBox.x, captionBox.y, captionBox.z - .001, captionBox.width, captionBox.height * fontSizeModifiers[size].boxHeightModifier)
+  lovr.graphics.setShader()
 
   local textColor = darkMode and darkModeText or lightModeText
   lovr.graphics.setColor(textColor)
@@ -107,4 +122,32 @@ function scrollUp()
   captions[1] = captions[2]
   captions[2] = captions[3]
   captions[3] = ''
+end
+
+function createCaptionBoxShader()
+  roundrect = lovr.graphics.newShader(
+    [[
+      out vec2 size;
+      vec4 position(mat4 projection, mat4 transform, vec4 vertex) {
+        size = vec2(length(vec3(transform[0])), length(vec3(transform[1])));
+        return projection * transform * vertex;
+      }
+    ]], [[
+      in vec2 size;
+      uniform float radius;
+      vec4 color(vec4 graphicsColor, sampler2D image, vec2 uv) {
+        float r = min(radius, min(size.x, size.y));
+        uv *= 2.;
+        uv -= 1.;
+        uv *= size;
+        vec2 b = size;
+        vec2 d = abs(uv) - (b - r);
+        float sdf = length(max(d, vec2(0))) + min(max(d.x, d.y), 0.) - r;
+        float fw = fwidth(sdf);
+        float alpha = smoothstep(fw, -fw, sdf);
+        return vec4(graphicsColor.rgb, graphicsColor.a * alpha);
+      }
+    ]]
+  )
+  roundrect:send('radius', .15)
 end
