@@ -1,5 +1,4 @@
 io.stdout:setvbuf('no')
-local root = lovr.filesystem.getRealDirectory('data')
 controlPanel = require 'control-panel'
 local speech = require 'speech'
 
@@ -20,7 +19,7 @@ function lovr.load()
   currentLine = 1
 
   lightModeBackground = { 245/255, 235/255, 245/255, .9 }
-  lightModeText = 0x141414
+  lightModeText = { 20/255, 20/255, 20/255, 1 }
   darkModeBackground = { 20/255, 20/255, 20/255, .9 }
   darkModeText = { .9, .9, .9, 1 }
 
@@ -31,10 +30,10 @@ function lovr.load()
   }
 
   screenshots = {
-    lovr.graphics.newTexture(root .. '/images/PANO_20150408_183912.jpg', { mipmaps = false }),
+    lovr.graphics.newTexture('/images/PANO_20150408_183912.jpg', { mipmaps = false }),
     lovr.graphics.newTexture('/images/obduction-nvidia-ansel-360-photosphere.jpg', { mipmaps = false }),
-    lovr.graphics.newTexture(root .. '/images/VikingVillage_thumb.jpg', { mipmaps = false }),
-    lovr.graphics.newTexture(root .. '/images/PANO_20191112_182609.jpg', { mipmaps = false })
+    lovr.graphics.newTexture('/images/VikingVillage_thumb.jpg', { mipmaps = false }),
+    lovr.graphics.newTexture('/images/PANO_20191112_182609.jpg', { mipmaps = false })
   }
 end
 

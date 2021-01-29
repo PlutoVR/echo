@@ -1,8 +1,11 @@
 local speech = {}
 
-local root = lovr.filesystem.getRealDirectory('data')
+local root = lovr.filesystem.getSaveDirectory()
 
 function speech:init()
+  lovr.filesystem.write('model.pbmm', lovr.filesystem.read('/data/deepspeech-0.9.3-models.pbmm'))
+  lovr.filesystem.write('model.scorer', lovr.filesystem.read('/data/deepspeech-0.9.3-models.scorer'))
+
   self.active = true
   self.chunkSize = 1024
   self.microphone = lovr.audio.newMicrophone(nil, self.chunkSize * 2, 16000, 16, 1)
@@ -31,8 +34,8 @@ function speech:init()
     local prevTime = 0
 
     speech.init({
-      model = root .. '/data/deepspeech-0.9.3-models.pbmm',
-      scorer = root .. '/data/deepspeech-0.9.3-models.scorer'
+      model = root .. '/model.pbmm',
+      scorer = root .. '/model.scorer'
     })
 
     sampleRate = speech.getSampleRate()
