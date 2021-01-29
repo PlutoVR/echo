@@ -10,7 +10,6 @@ function lovr.load()
   active = controlPanel.settings.active
   darkMode = controlPanel.settings.theme == 'dark'
   size = controlPanel.settings.fontSize
-  wristControl = false
 
   captionBox = { x = 0, y = 1.5, z = -2, width = 1.5, height = .65 }
   captions = { '', '', '' }
@@ -32,9 +31,7 @@ function lovr.load()
   }
 
   screenshots = {
-    lovr.graphics.newTexture('/images/PANO_20150408_183912.jpg', { mipmaps = false }),
     lovr.graphics.newTexture('/images/obduction-nvidia-ansel-360-photosphere.jpg', { mipmaps = false }),
-    lovr.graphics.newTexture('/images/PANO_20191112_182609.jpg', { mipmaps = false })
   }
 
   createCaptionBoxShader()
@@ -60,7 +57,7 @@ end
 
 function lovr.draw()
   lovr.graphics.setColor(white)
-  lovr.graphics.skybox(screenshots[2])
+  lovr.graphics.skybox(screenshots[1])
   controlPanel:drawPointer()
 
   if not active then
@@ -71,12 +68,7 @@ function lovr.draw()
   drawCaptions()
 
   local x, y, z, angle, ax, ay, az, scale
-  if wristControl then
-    x, y, z, angle, ax, ay, az = lovr.headset.getPose('left')
-  else
-    x, y, z = captionBox.x - ((captionBox.width / 2) - .25), captionBox.y - (((captionBox.height / 2) * fontSizeModifiers[size].boxHeightModifier) + .1), captionBox.z
-    angle, ax, ay, az = 0, 0, 1, 0
-  end
+  x, y, z = captionBox.x - ((captionBox.width / 2) - .25), captionBox.y - (((captionBox.height / 2) * fontSizeModifiers[size].boxHeightModifier) + .1), captionBox.z
   controlPanel:drawUI(x, y, z)
 
   lovr.graphics.setColor(white)
