@@ -49,7 +49,6 @@ function lovr.update(dt)
   fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
 end
 
-
 function lovr.draw()
   lovr.graphics.setColor(0xffffff)
   lovr.graphics.skybox(screenshots[2])
@@ -65,12 +64,9 @@ function lovr.draw()
     x, y, z = captionBox.x - ((captionBox.width / 2) - .05), captionBox.y - (((captionBox.height / 2) * fontSizeModifiers[size].boxHeightModifier) + .1), captionBox.z
     angle, ax, ay, az = 0, 0, 1, 0
   end
-  lovr.graphics.push()
-  lovr.graphics.translate(x, y, z)
-  lovr.graphics.rotate(angle, ax, ay, az)
-  lovr.graphics.scale(wristControl and .35 or 1)
-  controlPanel:draw()
-  lovr.graphics.pop()
+  controlPanel:drawUI(x, y, z)
+  controlPanel:drawPointer()
+
   lovr.graphics.setColor(0xffffff)
 end
 
