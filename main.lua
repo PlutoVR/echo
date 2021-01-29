@@ -10,20 +10,25 @@ function lovr.load()
   speech:init()
   active = controlPanel.settings.active
   darkMode = controlPanel.settings.theme == 'dark'
+  size = controlPanel.settings.fontSize
 
-  captionBox = { x = 0, y = 1, z = -2 }
-  captions = { 'captions', 'test', 'yoyoyoyoyoyoyoyoyoyoyoyoyoyoyo' }
+  captionBox = { x = 0, y = 1, z = -2, width = 1.5, height = .65 }
+  captions = { 'captions', 'test', 'yoyoyoyoyoyoyoyoyoyoyo' }
   fadingCaption = ''
   fadingCaptionOpacity = 1
   wasPressed = false
-  textScale = .125
   currentLine = 1
-  maxLineLength = 32
 
   lightModeBackground = { 245/255, 235/255, 245/255, .9 }
   lightModeText = 0x141414
   darkModeBackground = { 20/255, 20/255, 20/255, .9 }
   darkModeText = { .9, .9, .9, 1 }
+
+  fontSizeModifiers = {
+    small = { textScale = .055, maxLineLength = 52, lineOffset = .07, boxHeightModifier = .5 },
+    medium = { textScale = .09, maxLineLength = 32, lineOffset = .1185, boxHeightModifier = .75 },
+    large = { textScale = .13, maxLineLength = 22, lineOffset = .14, boxHeightModifier = 1 }
+  }
 
   screenshots = {
     lovr.graphics.newTexture(root .. '/images/PANO_20150408_183912.jpg', { mipmaps = false }),
@@ -51,7 +56,7 @@ function lovr.draw()
 
   drawCaptions()
   lovr.graphics.push()
-  lovr.graphics.translate(captionBox.x - .9, captionBox.y - .4, captionBox.z)
+  lovr.graphics.translate(captionBox.x - ((captionBox.width / 2) - .05), captionBox.y - (((captionBox.height / 2) * fontSizeModifiers[size].boxHeightModifier) + .1), captionBox.z)
   controlPanel:draw()
   lovr.graphics.pop()
   lovr.graphics.setColor(0xffffff)
@@ -60,18 +65,18 @@ end
 function drawCaptions()
   local backgroundColor = darkMode and darkModeBackground or lightModeBackground
   lovr.graphics.setColor(backgroundColor)
-  lovr.graphics.plane('fill', captionBox.x, captionBox.y, captionBox.z - .001, 2, .65)
+  lovr.graphics.plane('fill', captionBox.x, captionBox.y, captionBox.z - .001, captionBox.width, captionBox.height * fontSizeModifiers[size].boxHeightModifier)
 
   local textColor = darkMode and darkModeText or lightModeText
   lovr.graphics.setColor(textColor)
-  lovr.graphics.print(captions[1], captionBox.x, captionBox.y + .15, captionBox.z, textScale)
-  lovr.graphics.print(captions[2], captionBox.x, captionBox.y, captionBox.z, textScale)
-  lovr.graphics.print(captions[3], captionBox.x, captionBox.y - .15, captionBox.z, textScale)
+  lovr.graphics.print(captions[1], captionBox.x, captionBox.y + fontSizeModifiers[size].lineOffset, captionBox.z, fontSizeModifiers[size].textScale)
+  lovr.graphics.print(captions[2], captionBox.x, captionBox.y, captionBox.z, fontSizeModifiers[size].textScale)
+  lovr.graphics.print(captions[3], captionBox.x, captionBox.y - fontSizeModifiers[size].lineOffset, captionBox.z, fontSizeModifiers[size].textScale)
 
   if not isEmpty(fadingCaption) then
     local r, g, b, a = unpack(textColor)
     lovr.graphics.setColor(r, g, b, fadingCaptionOpacity)
-    lovr.graphics.print(fadingCaption, captionBox.x, captionBox.y + .28, captionBox.z, textScale)
+    lovr.graphics.print(fadingCaption, captionBox.x, captionBox.y + (fontSizeModifiers[size].lineOffset * 2), captionBox.z, fontSizeModifiers[size].textScale)
     if fadingCaptionOpacity == 0 then
       fadingCaption = ''
     end
@@ -84,7 +89,7 @@ end
 
 function addCaption(text)
   if not isEmpty(text) then
-    if (#captions[currentLine] + #text) <= maxLineLength then
+    if (#captions[currentLine] + #text) <= fontSizeModifiers[size].maxLineLength then
       captions[currentLine] = captions[currentLine] .. ' ' .. text
     else
       if currentLine == 3 then

@@ -64,14 +64,7 @@ end
 function speech:updateCaptions()
   local message, present = self.speechChannel:peek()
   if present and type(message) == "string" then
-    local t = self.speechChannel:pop()
-    if string.find(t, 'cap on') then
-      self.active = true
-    elseif string.find(t, 'cap off') then
-      self.active = false
-    else
-      addCaption(t)
-    end
+    addCaption(self.speechChannel:pop())
   end
 end
 
