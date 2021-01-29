@@ -32,6 +32,7 @@ function lovr.load()
 
   screenshots = {
     lovr.graphics.newTexture('/images/obduction-nvidia-ansel-360-photosphere.jpg', { mipmaps = false }),
+    lovr.graphics.newTexture('/images/PANO_20150408_183912.jpg', { mipmaps = false }),
   }
 
   createCaptionBoxShader()
@@ -57,7 +58,7 @@ end
 
 function lovr.draw()
   lovr.graphics.setColor(white)
-  lovr.graphics.skybox(screenshots[1])
+  lovr.graphics.skybox(screenshots[2])
   controlPanel:drawPointer()
 
   if not active then
