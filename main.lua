@@ -20,7 +20,7 @@ function lovr.load()
   fadeAllTimer = lovr.timer.getTime() + 10
   currentLine = 1
 
-  lightModeBackground = { 245/255, 235/255, 245/255, .9 }
+  lightModeBackground = { 235/255, 225/255, 235/255, .75 }
   lightModeText = { 20/255, 20/255, 20/255, 1 }
   darkModeBackground = { 20/255, 10/255, 20/255, .9 }
   darkModeText = { .9, .9, .9, 1 }
@@ -34,7 +34,6 @@ function lovr.load()
   screenshots = {
     lovr.graphics.newTexture('/images/PANO_20150408_183912.jpg', { mipmaps = false }),
     lovr.graphics.newTexture('/images/obduction-nvidia-ansel-360-photosphere.jpg', { mipmaps = false }),
-    lovr.graphics.newTexture('/images/VikingVillage_thumb.jpg', { mipmaps = false }),
     lovr.graphics.newTexture('/images/PANO_20191112_182609.jpg', { mipmaps = false })
   }
 
@@ -62,8 +61,12 @@ end
 function lovr.draw()
   lovr.graphics.setColor(0xffffff)
   lovr.graphics.skybox(screenshots[2])
+  controlPanel:drawPointer()
 
-  if not active then return end
+  if not active then
+    controlPanel:drawAppIcon()
+    return
+  end
 
   drawCaptions()
 
@@ -74,7 +77,6 @@ function lovr.draw()
     x, y, z = captionBox.x - ((captionBox.width / 2) - .25), captionBox.y - (((captionBox.height / 2) * fontSizeModifiers[size].boxHeightModifier) + .1), captionBox.z
     angle, ax, ay, az = 0, 0, 1, 0
   end
-  controlPanel:drawPointer()
   controlPanel:drawUI(x, y, z)
 
   lovr.graphics.setColor(0xffffff)
