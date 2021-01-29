@@ -46,16 +46,17 @@ function speech:init()
     print('~~ mic: '..microphone:getName())
 
     while true do
-      if microphone:getSampleCount() > chunkSize then
-        local soundData = microphone:getData()
-        stream:feed(soundData:getBlob():getPointer(), soundData:getSampleCount())
-      end
       local time = lovr.timer.getTime()
       if time - prevTime > 1.5 then
         prevTime = time
         captions = stream:decode()
         stream:clear()
         channel:push(captions)
+      end
+
+      if microphone:getSampleCount() > chunkSize then
+        local soundData = microphone:getData()
+        stream:feed(soundData:getBlob():getPointer(), soundData:getSampleCount())
       end
     end
   ]])

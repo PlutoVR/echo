@@ -47,7 +47,7 @@ function lovr.update(dt)
   active = controlPanel.settings.active
   darkMode = controlPanel.settings.theme == 'dark'
   size = controlPanel.settings.fontSize
-  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 7), 0)
+  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 6), 0)
 
   local time = lovr.timer.getTime()
   if time >= fadeAllTimer then
@@ -59,7 +59,7 @@ function lovr.update(dt)
 end
 
 function lovr.draw()
-  lovr.graphics.setColor(0xffffff)
+  lovr.graphics.setColor(white)
   lovr.graphics.skybox(screenshots[2])
   controlPanel:drawPointer()
 
@@ -79,7 +79,7 @@ function lovr.draw()
   end
   controlPanel:drawUI(x, y, z)
 
-  lovr.graphics.setColor(0xffffff)
+  lovr.graphics.setColor(white)
 end
 
 function drawCaptions()
