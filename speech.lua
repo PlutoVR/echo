@@ -1,17 +1,20 @@
 local speech = {}
 
-local root = lovr.filesystem.getSaveDirectory()
+local saveDir = lovr.filesystem.getSaveDirectory()
 
 function speech:init()
-  lovr.filesystem.write('model.pbmm', lovr.filesystem.read('/data/deepspeech-0.9.3-models.pbmm'))
-  lovr.filesystem.write('model.scorer', lovr.filesystem.read('/data/deepspeech-0.9.3-models.scorer'))
+  local pbmmExists, scorerExists = lovr.filesystem.isFile('model.pbmm'), lovr.filesystem.isFile('model.scorer')
+  if not (pbmmExists and scorerExists) then
+    lovr.filesystem.write('model.pbmm', lovr.filesystem.read('/data/deepspeech-0.9.3-models.pbmm'))
+    lovr.filesystem.write('model.scorer', lovr.filesystem.read('/data/deepspeech-0.9.3-models.scorer'))
+  end
 
   self.chunkSize = 1024
   self.microphone = lovr.audio.newMicrophone(nil, self.chunkSize * 2, 16000, 16, 1)
   self.microphone:startRecording()
 
   self.speechChannel = lovr.thread.getChannel('speech')
-  self.speechChannel:push(root)
+  self.speechChannel:push(saveDir)
   self.speechChannel:push(self.chunkSize)
   self.speechChannel:push(self.microphone)
 
@@ -25,7 +28,7 @@ function speech:init()
     }
     local channel = lovr.thread.getChannel('speech')
 
-    local root = channel:pop()
+    local saveDir = channel:pop()
     local chunkSize = channel:pop()
     local microphone = channel:pop()
 
@@ -33,8 +36,8 @@ function speech:init()
     local prevTime = 0
 
     speech.init({
-      model = root .. '/model.pbmm',
-      scorer = root .. '/model.scorer'
+      model = saveDir .. '/model.pbmm',
+      scorer = saveDir .. '/model.scorer'
     })
 
     sampleRate = speech.getSampleRate()

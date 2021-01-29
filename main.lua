@@ -13,9 +13,11 @@ function lovr.load()
   wristControl = false
 
   captionBox = { x = 0, y = 1, z = -2, width = 1.5, height = .65 }
-  captions = { 'captions', 'test', 'yoyoyoyoyoyoyoyoyoyoyo' }
+  captions = { '', '', '' }
   fadingCaption = ''
   fadingCaptionOpacity = 1
+  fadingAllOpacity = 1
+  fadeAllTimer = lovr.timer.getTime() + 10
   currentLine = 1
 
   lightModeBackground = { 245/255, 235/255, 245/255, .9 }
@@ -46,7 +48,15 @@ function lovr.update(dt)
   active = controlPanel.settings.active
   darkMode = controlPanel.settings.theme == 'dark'
   size = controlPanel.settings.fontSize
-  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 5), 0)
+  fadingCaptionOpacity = math.max(fadingCaptionOpacity - (dt * 7), 0)
+
+  local time = lovr.timer.getTime()
+  if time >= fadeAllTimer then
+    fadingAllOpacity = math.max(fadingAllOpacity - (dt * 5), 0)
+  end
+  if fadingAllOpacity == 0 then
+    resetCaptions()
+  end
 end
 
 function lovr.draw()
@@ -78,7 +88,8 @@ function drawCaptions()
   lovr.graphics.setShader()
 
   local textColor = darkMode and darkModeText or lightModeText
-  lovr.graphics.setColor(textColor)
+  local r, g, b, a = unpack(textColor)
+  lovr.graphics.setColor(r, g, b, fadingAllOpacity)
   lovr.graphics.print(captions[1], captionBox.x, captionBox.y + fontSizeModifiers[size].lineOffset, captionBox.z, fontSizeModifiers[size].textScale)
   lovr.graphics.print(captions[2], captionBox.x, captionBox.y, captionBox.z, fontSizeModifiers[size].textScale)
   lovr.graphics.print(captions[3], captionBox.x, captionBox.y - fontSizeModifiers[size].lineOffset, captionBox.z, fontSizeModifiers[size].textScale)
@@ -99,6 +110,7 @@ end
 
 function addCaption(text)
   if not isEmpty(text) then
+    fadingAllOpacity = 1
     if (#captions[currentLine] + #text) <= fontSizeModifiers[size].maxLineLength then
       captions[currentLine] = captions[currentLine] .. ' ' .. text
     else
@@ -109,6 +121,7 @@ function addCaption(text)
       end
       captions[currentLine] = text
     end
+    fadeAllTimer = lovr.timer.getTime() + 5
   end
 end
 
@@ -118,6 +131,13 @@ function scrollUp()
   captions[1] = captions[2]
   captions[2] = captions[3]
   captions[3] = ''
+end
+
+function resetCaptions()
+  captions[1] = ''
+  captions[2] = ''
+  captions[3] = ''
+  currentLine = 1
 end
 
 function createCaptionBoxShader()
