@@ -53,7 +53,6 @@ function control:init()
   self.buttonHeight = .2*self.buttonScale
   self.buttonWidth = .2*self.buttonScale
   self.offsetX, self.offsetY, self.offsetZ = 0, 0, 0
-  self.hovering = {}
 
   self.tips = {}
 end
@@ -73,7 +72,6 @@ function control:raycast(rayPos, rayDir, planePos, planeDir)
 end
 
 function control:updatePointer()
-  self.hovering = {}
   for i, hand in ipairs(lovr.headset.getHands()) do
     self.tips[hand] = self.tips[hand] or lovr.math.newVec3()
 
@@ -95,7 +93,6 @@ function control:updatePointer()
       -- If the ray intersects the plane, do a bounds test to make sure the x/y position of the hit
       -- is inside the button, then mark the button as hover/active based on the trigger state.
       if inside then
-        self.hovering[hand] = true
         if lovr.headset.wasReleased(hand, 'trigger') then
           button.onClick()
         end
@@ -143,7 +140,7 @@ function control:drawPointer()
     lovr.graphics.setColor(1, 1, 1)
     lovr.graphics.sphere(position, .01)
 
-    if self.settings.active and self.hovering[hand] ~= nil then
+    if self.settings.active then
       lovr.graphics.line(position, tip)
       lovr.graphics.setColor(1, 1, 1)
     end
