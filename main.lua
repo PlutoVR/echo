@@ -71,11 +71,11 @@ function lovr.draw()
   if wristControl then
     x, y, z, angle, ax, ay, az = lovr.headset.getPose('left')
   else
-    x, y, z = captionBox.x - ((captionBox.width / 2) - .05), captionBox.y - (((captionBox.height / 2) * fontSizeModifiers[size].boxHeightModifier) + .1), captionBox.z
+    x, y, z = captionBox.x - ((captionBox.width / 2) - .25), captionBox.y - (((captionBox.height / 2) * fontSizeModifiers[size].boxHeightModifier) + .1), captionBox.z
     angle, ax, ay, az = 0, 0, 1, 0
   end
-  controlPanel:drawUI(x, y, z)
   controlPanel:drawPointer()
+  controlPanel:drawUI(x, y, z)
 
   lovr.graphics.setColor(0xffffff)
 end
